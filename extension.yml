@@ -1,0 +1,93 @@
+schema_version: "1.0"
+
+extension:
+  id: metricas
+  name: "Metricas de esfuerzo SDD"
+  version: "0.1.0"
+  description: "Registra esfuerzo, modelo de IA y lineas de codigo generadas/desperdiciadas por fase SDD, y calibra un modelo de estimacion de esfuerzo, tiempo y costo tipo COCOMO II"
+  author: georaura
+  repository: https://github.com/georaura/speckit-metricas
+  license: MIT
+
+requires:
+  speckit_version: ">=0.2.0"
+  tools:
+    - name: git
+      required: true
+
+provides:
+  commands:
+    - name: speckit.metricas.inicializar
+      file: commands/speckit.metricas.inicializar.md
+      description: "Crear la carpeta metricas/ con la configuracion y el registro de sesiones"
+    - name: speckit.metricas.sesion
+      file: commands/speckit.metricas.sesion.md
+      description: "Abrir o cambiar la sesion de trabajo registrando fase, herramienta y modelo de IA"
+    - name: speckit.metricas.cerrar
+      file: commands/speckit.metricas.cerrar.md
+      description: "Cerrar la sesion activa y registrar horas y lineas de codigo generadas/eliminadas"
+    - name: speckit.metricas.puntos
+      file: commands/speckit.metricas.puntos.md
+      description: "Calcular los Puntos de Tarea SDD (PTS) de la funcionalidad a partir de tasks.md"
+    - name: speckit.metricas.recolectar
+      file: commands/speckit.metricas.recolectar.md
+      description: "Calcular tamano, duracion, esfuerzo, costo y desperdicio por funcionalidad"
+    - name: speckit.metricas.exportar
+      file: commands/speckit.metricas.exportar.md
+      description: "Empaquetar el dataset del proyecto para compartirlo y consolidarlo"
+    - name: speckit.metricas.calibrar
+      file: commands/speckit.metricas.calibrar.md
+      description: "Consolidar datasets y calibrar el modelo de esfuerzo, tiempo y costo"
+    - name: speckit.metricas.estimar
+      file: commands/speckit.metricas.estimar.md
+      description: "Estimar esfuerzo, tiempo y costo con el modelo calibrado"
+
+hooks:
+  before_constitution:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase constitucion"
+  before_specify:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase especificar"
+  before_clarify:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase aclarar"
+  before_plan:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase planificar"
+  before_tasks:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase tareas"
+  after_tasks:
+    command: speckit.metricas.puntos
+    optional: false
+    description: "Fijar la linea base de Puntos de Tarea SDD del plan"
+  before_analyze:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase analizar"
+  before_checklist:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase analizar (checklist)"
+  before_implement:
+    command: speckit.metricas.sesion
+    optional: false
+    description: "Registrar sesion de la fase implementar"
+  after_implement:
+    command: speckit.metricas.cerrar
+    optional: true
+    prompt: "Cerrar la sesion de implementacion y registrar las lineas generadas?"
+    description: "Cerrar la sesion de implementacion"
+
+tags:
+  - "metrics"
+  - "estimation"
+  - "cocomo"
+  - "effort"
+  - "ai"

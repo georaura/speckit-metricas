@@ -1,0 +1,50 @@
+{
+  "nombre": "Puntos de Tarea SDD (PTS)",
+  "version": "1.0",
+  "nota": "Pesos iniciales inspirados en la matriz tipo x complejidad de los puntos de funcion IFPUG. Son hipotesis: se recalibran con datos de varios proyectos.",
+  "complejidades": ["baja", "media", "alta"],
+  "criterios_complejidad": {
+    "baja": "Un archivo, patron conocido, sin dependencias de otras tareas ni decisiones de diseno.",
+    "media": "Dos o tres archivos, o depende de otras tareas, o requiere decisiones de diseno locales.",
+    "alta": "Cuatro o mas archivos, algoritmo o protocolo no trivial, tecnologia nueva para el equipo, hardware o rendimiento critico."
+  },
+  "tipos": {
+    "configuracion": {
+      "descripcion": "Estructura del proyecto, dependencias, herramientas, CI, entorno",
+      "pesos": [1, 2, 3],
+      "palabras_clave": ["setup", "configur", "install", "inicializ", "initialize", "dependenc", "lint", "format", "scaffold", "estructura", "structure", "entorno", "environment", "pipeline", "ci ", "docker", "certific"]
+    },
+    "datos": {
+      "descripcion": "Modelos, entidades, esquemas, migraciones, formatos de archivo",
+      "pesos": [2, 3, 5],
+      "palabras_clave": ["model", "entidad", "entity", "schema", "esquema", "migraci", "migration", "database", "base de datos", "tabla", "table", "tipo de dato", "dto"]
+    },
+    "logica": {
+      "descripcion": "Servicios, reglas de negocio, algoritmos, gestion de estado",
+      "pesos": [3, 5, 8],
+      "palabras_clave": ["service", "servicio", "algoritm", "logic", "logica", "calcul", "validaci", "validation", "regla", "rule", "estado", "state", "store", "handler", "manejador", "parser", "motor", "engine"]
+    },
+    "interfaz": {
+      "descripcion": "Pantallas, componentes, vistas, escenas, interaccion de usuario",
+      "pesos": [3, 5, 8],
+      "palabras_clave": ["ui", "component", "pantalla", "screen", "vista", "view", "page", "pagina", "escena", "scene", "panel", "estilo", "style", "css", "formulario", "form", "render", "hud", "boton", "button", "menu", "dialog"]
+    },
+    "integracion": {
+      "descripcion": "APIs, endpoints, contratos, protocolos, servicios externos, dispositivos",
+      "pesos": [4, 6, 10],
+      "palabras_clave": ["api", "endpoint", "contrat", "contract", "protocol", "websocket", "integra", "http", "sdk", "proveedor", "provider", "sincroniz", "sync", "externo", "external", "webhook", "dispositivo", "device", "hardware", "webxr"]
+    },
+    "prueba": {
+      "descripcion": "Pruebas automatizadas de contrato, integracion, unidad o extremo a extremo",
+      "pesos": [1, 2, 4],
+      "palabras_clave": ["test", "prueba", "e2e", "quickstart", "verifica", "verify"]
+    },
+    "documentacion": {
+      "descripcion": "Documentacion, limpieza, pulido, refactorizacion menor",
+      "pesos": [1, 1, 2],
+      "palabras_clave": ["doc", "readme", "documenta", "comentario", "pulido", "polish", "cleanup", "limpieza", "refactor"]
+    }
+  },
+  "orden_heuristica": ["prueba", "documentacion", "configuracion", "integracion", "datos", "interfaz", "logica"],
+  "tipo_por_defecto": "logica"
+}

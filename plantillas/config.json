@@ -1,0 +1,20 @@
+{
+  "proyecto": "__PROYECTO__",
+  "descripcion": "",
+  "dominio": "",
+  "tipo_aplicacion": "",
+  "metodologia": "SDD",
+  "herramienta_sdd": "__HERRAMIENTA_SDD__",
+  "tamano_equipo": 1,
+  "moneda": "USD",
+  "costo_hora_humano": 0,
+  "horas_por_persona_mes": 152,
+  "max_horas_sesion_automatica": 4,
+  "directorio_specs": "specs",
+  "rutas_excluidas": ["specs/", "docs/", "metricas/", ".specify/", ".agents/", ".github/", ".claude/"],
+  "archivos_excluidos": "(^|/)(package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|poetry\\.lock|Cargo\\.lock)$",
+  "extensiones_codigo": ["js", "mjs", "cjs", "ts", "tsx", "jsx", "vue", "svelte", "py", "java", "kt", "cs",
+                         "go", "rs", "rb", "php", "swift", "dart", "c", "cpp", "h", "ps1", "sh", "sql",
+                         "css", "scss", "html", "glsl", "wgsl", "json", "yml", "yaml"],
+  "patron_pruebas": "(^|/)(tests?|__tests__|spec|e2e)/|[._-](test|spec)s?\\.[a-z]+\\}?$"
+}
