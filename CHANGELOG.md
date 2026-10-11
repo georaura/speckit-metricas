@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - 2026-10-11
+
+- Nuevos comandos `pausetask` y `resumetask`: el tiempo en pausa no se cuenta como esfuerzo y se
+  registra en la nueva columna `minutos_pausa` de cada sesión.
+- Las sesiones abiertas con la 0.1.0 se pueden pausar sin perder datos.
+
 ## 0.1.0 - 2026-10-11
 
 Primera versión experimental.

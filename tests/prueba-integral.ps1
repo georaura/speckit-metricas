@@ -139,6 +139,23 @@ try {
     $log = Get-ChildItem (Join-Path $repoA 'metricas/sesiones') -Filter *.csv | ForEach-Object { Import-Csv $_.FullName }
     Assert-Equal (@($log | Where-Object { $_.loc_elim_defecto -eq '30' }).Count) 1 'sesion con 30 lineas por defecto'
 
+    Write-Host "`n--- Pausa y reanudacion ---"
+    Set-Location $repoA
+    [Environment]::CurrentDirectory = $repoA
+    Invoke-Kit 'sesion.ps1' iniciar -Fase probar -Herramienta claude-code -ModeloIA claude-opus-5-5 -NivelRazonamiento medium | Out-Null
+    Invoke-Kit 'sesion.ps1' pausar | Out-Null
+    # Simula una sesion iniciada hace 2 h con una pausa iniciada hace 1 h.
+    $stateFile = Join-Path $repoA 'metricas/.sesion-activa.json'
+    $state = Get-Content $stateFile -Raw | ConvertFrom-Json
+    $state.inicio = (Get-Date).AddMinutes(-120).ToString('s')
+    $state.pausa_desde = (Get-Date).AddMinutes(-60).ToString('s')
+    $state | ConvertTo-Json | Set-Content $stateFile -Encoding UTF8
+    Invoke-Kit 'sesion.ps1' reanudar | Out-Null
+    Invoke-Kit 'sesion.ps1' cerrar -Actividad 'Prueba de pausa' | Out-Null
+    $paused = Get-ChildItem (Join-Path $repoA 'metricas/sesiones') -Filter '*-probar-*.csv' | ForEach-Object { Import-Csv $_.FullName }
+    Assert-Equal $paused.horas_humano 1 'horas efectivas con 1 h de pausa'
+    Assert-Equal $paused.minutos_pausa 60 'minutos de pausa registrados'
+
     Write-Host "`n--- Consolidar y calibrar ---"
     $datasets = Join-Path $work 'datasets'
     New-Item -ItemType Directory -Path $datasets | Out-Null

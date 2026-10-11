@@ -5,7 +5,7 @@
 # Punto decimal en los CSV, independiente de la configuracion regional.
 [System.Threading.Thread]::CurrentThread.CurrentCulture = [System.Globalization.CultureInfo]::InvariantCulture
 
-$script:KitVersion = '0.1.0'
+$script:KitVersion = '0.2.0'
 $script:ExtensionRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 
 # Fases SDD estandar. Son fijas para que los datos de distintos proyectos sean comparables.
@@ -24,7 +24,7 @@ $script:PhaseOfEvent = @{
 $script:Causes = @('requisito', 'defecto', 'refactor')
 
 $script:LogColumns = @('proyecto', 'desarrollador', 'fecha', 'inicio', 'fin', 'horas_humano',
-    'horas_agente', 'funcionalidad', 'fase', 'actividad', 'herramienta', 'version_herramienta',
+    'horas_agente', 'minutos_pausa', 'funcionalidad', 'fase', 'actividad', 'herramienta', 'version_herramienta',
     'modelo_ia', 'nivel_razonamiento', 'commit_inicio', 'commit_fin', 'commits',
     'loc_agregadas', 'loc_eliminadas', 'loc_pruebas_agregadas', 'loc_pruebas_eliminadas',
     'loc_elim_requisito', 'loc_elim_defecto', 'loc_elim_refactor', 'loc_elim_sin_clasificar',

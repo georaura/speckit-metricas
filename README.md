@@ -4,7 +4,7 @@ Extensión de [GitHub Spec Kit](https://github.com/github/spec-kit) para **medir
 proyectos desarrollados con Spec-Driven Development (SDD) asistido por IA** y **calibrar un
 modelo de estimación de esfuerzo, tiempo y costo tipo COCOMO II** con datos de varios proyectos.
 
-> Estado: **0.1.0 experimental**. Los formatos de datos pueden cambiar antes de la 1.0.
+> Estado: **0.2.0 experimental**. Los formatos de datos pueden cambiar antes de la 1.0.
 
 ## Qué mide
 
@@ -33,7 +33,7 @@ tamaño, informa MMRE, PRED(25) y validación cruzada, y lo compara con COCOMO I
 
 ```bash
 # Desde una versión publicada
-specify extension add metricas --from https://github.com/georaura/speckit-metricas/archive/refs/tags/v0.1.0.zip
+specify extension add metricas --from https://github.com/georaura/speckit-metricas/archive/refs/tags/v0.2.0.zip
 
 # Desde una copia local (desarrollo)
 specify extension add --dev /ruta/a/speckit-metricas
@@ -60,7 +60,9 @@ El registro es casi automático:
 1. Cada `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-implement`… dispara un hook
    que **cierra la sesión anterior y abre la de la nueva fase**, con el modelo de IA del agente.
 2. Al terminar `/speckit-tasks`, el hook `/speckit-metricas-puntos` fija la **línea base de PTS**.
-3. Para trabajo fuera de los comandos (pruebas en dispositivo, aprendizaje, integración) use
+3. Si deja de trabajar (almuerzo, reunión, fin del día), use `/speckit-metricas-pausetask` y al
+   volver `/speckit-metricas-resumetask`: las pausas se descuentan solas de las horas.
+4. Para trabajo fuera de los comandos (pruebas en dispositivo, aprendizaje, integración) use
    `/speckit-metricas-sesion verificar-dispositivo` y `/speckit-metricas-cerrar`.
 
 Dos convenciones de commits hacen posible medir el código:
@@ -89,6 +91,8 @@ registrado.
 | `/speckit-metricas-inicializar` | Crea `metricas/` y ayuda a completar la configuración |
 | `/speckit-metricas-sesion` | Abre o cambia la sesión (fase, herramienta, modelo de IA) |
 | `/speckit-metricas-cerrar` | Cierra la sesión y registra horas y líneas por causa |
+| `/speckit-metricas-pausetask` | Pausa la sesión: el tiempo deja de contarse (dejé de trabajar) |
+| `/speckit-metricas-resumetask` | Reanuda la sesión pausada |
 | `/speckit-metricas-puntos` | Calcula los Puntos de Tarea SDD de la funcionalidad |
 | `/speckit-metricas-recolectar` | Resume tamaño, duración, esfuerzo, costo y desperdicio |
 | `/speckit-metricas-exportar` | Empaqueta el dataset del proyecto (opcionalmente anonimizado) |

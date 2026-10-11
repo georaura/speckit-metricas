@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: metricas
   name: "Metricas de esfuerzo SDD"
-  version: "0.1.0"
+  version: "0.2.0"
   description: "Registra esfuerzo, modelo de IA y lineas de codigo generadas/desperdiciadas por fase SDD, y calibra un modelo de estimacion de esfuerzo, tiempo y costo tipo COCOMO II"
   author: georaura
   repository: https://github.com/georaura/speckit-metricas
@@ -26,6 +26,12 @@ provides:
     - name: speckit.metricas.cerrar
       file: commands/speckit.metricas.cerrar.md
       description: "Cerrar la sesion activa y registrar horas y lineas de codigo generadas/eliminadas"
+    - name: speckit.metricas.pausetask
+      file: commands/speckit.metricas.pausetask.md
+      description: "Pausar la sesion de trabajo: el tiempo deja de contarse hasta reanudar"
+    - name: speckit.metricas.resumetask
+      file: commands/speckit.metricas.resumetask.md
+      description: "Reanudar la sesion pausada: el tiempo vuelve a contarse"
     - name: speckit.metricas.puntos
       file: commands/speckit.metricas.puntos.md
       description: "Calcular los Puntos de Tarea SDD (PTS) de la funcionalidad a partir de tasks.md"

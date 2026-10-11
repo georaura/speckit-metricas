@@ -49,6 +49,7 @@ Cada sesión es un archivo en `metricas/sesiones/` con estas columnas:
 | `fecha`, `inicio`, `fin` | `AAAA-MM-DD`, `HH:MM` |
 | `horas_humano` | Dedicación efectiva de la persona. **Es el esfuerzo de COCOMO.** |
 | `horas_agente` | Tiempo de trabajo autónomo del agente (opcional) |
+| `minutos_pausa` | Minutos en pausa (`pausetask` / `resumetask`) descontados de `horas_humano` |
 | `funcionalidad`, `fase` | `NNN-nombre` y fase SDD |
 | `actividad` | Descripción breve |
 | `herramienta`, `version_herramienta` | Agente o IDE y su versión |
@@ -66,7 +67,8 @@ Cada sesión es un archivo en `metricas/sesiones/` con estas columnas:
 `especificar`, `aclarar`, `planificar`, `tareas`, `analizar`, `implementar`, `probar`,
 `verificar-dispositivo`, `integrar`, `infraestructura`, `gestion`, `aprendizaje`.
 
-Las sesiones automáticas (hooks) calculan las horas como el lapso entre comandos. Si el lapso
+Las horas son el lapso de la sesión menos las pausas registradas con `pausetask` /
+`resumetask`. Las sesiones automáticas (hooks) calculan las horas como el lapso entre comandos. Si el lapso
 supera `max_horas_sesion_automatica` (4 h por defecto), las horas quedan vacías para que la
 persona las complete: un lapso largo casi siempre incluye pausas.
 
