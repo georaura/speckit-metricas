@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - 2026-10-11
+
+- **Pausa automática por inactividad**: si entre dos actividades pasan más de
+  `minutos_inactividad_pausa` (30 por defecto), el hueco se descuenta aunque nadie haya pedido la
+  pausa (p. ej. se agotó el límite de uso del agente). Nueva columna `minutos_pausa_auto`.
+- Nueva acción `sesion.ps1 actividad` y archivo `metricas/.ultima-actividad`, pensados para hooks
+  del agente (configuración de Claude Code en el README).
+
 ## 0.2.0 - 2026-10-11
 
 - Nuevos comandos `pausetask` y `resumetask`: el tiempo en pausa no se cuenta como esfuerzo y se
