@@ -56,7 +56,7 @@ if (-not (Test-Path -LiteralPath $sessionsDir)) {
 
 $relative = (Resolve-Path -LiteralPath $dataDir).Path.Substring($repoRoot.Length).TrimStart('\', '/') -replace '\\', '/'
 $ignoreFile = Join-Path $repoRoot '.gitignore'
-$ignoreLines = @("$relative/.sesion-activa.json", "$relative/salidas/")
+$ignoreLines = @("$relative/.sesion-activa.json", "$relative/.ultima-actividad", "$relative/salidas/")
 $existing = if (Test-Path -LiteralPath $ignoreFile) { Get-Content -LiteralPath $ignoreFile } else { @() }
 $missing = @($ignoreLines | Where-Object { $existing -notcontains $_ })
 if ($missing.Count -gt 0) {

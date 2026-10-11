@@ -50,6 +50,7 @@ Cada sesión es un archivo en `metricas/sesiones/` con estas columnas:
 | `horas_humano` | Dedicación efectiva de la persona. **Es el esfuerzo de COCOMO.** |
 | `horas_agente` | Tiempo de trabajo autónomo del agente (opcional) |
 | `minutos_pausa` | Minutos en pausa (`pausetask` / `resumetask`) descontados de `horas_humano` |
+| `minutos_pausa_auto` | Minutos de inactividad mayores al umbral (p. ej. límite de uso del agente agotado), descontados de `horas_humano` |
 | `funcionalidad`, `fase` | `NNN-nombre` y fase SDD |
 | `actividad` | Descripción breve |
 | `herramienta`, `version_herramienta` | Agente o IDE y su versión |

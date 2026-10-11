@@ -156,6 +156,24 @@ try {
     Assert-Equal $paused.horas_humano 1 'horas efectivas con 1 h de pausa'
     Assert-Equal $paused.minutos_pausa 60 'minutos de pausa registrados'
 
+    Write-Host "`n--- Pausa automatica por inactividad ---"
+    Invoke-Kit 'sesion.ps1' iniciar -Fase integrar -Herramienta claude-code -ModeloIA claude-opus-5-5 -NivelRazonamiento medium | Out-Null
+    # Sesion de 2 h cuya ultima actividad fue hace 90 min (p. ej. se agoto el limite de uso).
+    $state = Get-Content $stateFile -Raw | ConvertFrom-Json
+    $state.inicio = (Get-Date).AddMinutes(-120).ToString('s')
+    $state.ultima_actividad = (Get-Date).AddMinutes(-90).ToString('s')
+    $state | ConvertTo-Json | Set-Content $stateFile -Encoding UTF8
+    $mensaje = Invoke-Kit 'sesion.ps1' actividad 6>&1 | Out-String
+    if ($mensaje -notmatch 'Pausa automatica') { Write-Host 'FALLA  actividad no informo la pausa automatica' -ForegroundColor Red; $failures++ }
+    # Una actividad reciente registrada por un hook del agente no genera otra pausa.
+    $ms = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
+    Set-Content (Join-Path $repoA 'metricas/.ultima-actividad') $ms
+    Invoke-Kit 'sesion.ps1' cerrar -Actividad 'Prueba de inactividad' | Out-Null
+    $idle = Get-ChildItem (Join-Path $repoA 'metricas/sesiones') -Filter '*-integrar-*.csv' | ForEach-Object { Import-Csv $_.FullName }
+    Assert-Equal $idle.horas_humano 0.5 'horas efectivas con 90 min inactivos'
+    Assert-Equal $idle.minutos_pausa_auto 90 'minutos de pausa automatica'
+    Assert-Equal $idle.minutos_pausa 0 'sin pausa manual'
+
     Write-Host "`n--- Consolidar y calibrar ---"
     $datasets = Join-Path $work 'datasets'
     New-Item -ItemType Directory -Path $datasets | Out-Null

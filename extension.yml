@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: metricas
   name: "Metricas de esfuerzo SDD"
-  version: "0.2.0"
+  version: "0.3.0"
   description: "Registra esfuerzo, modelo de IA y lineas de codigo generadas/desperdiciadas por fase SDD, y calibra un modelo de estimacion de esfuerzo, tiempo y costo tipo COCOMO II"
   author: georaura
   repository: https://github.com/georaura/speckit-metricas

@@ -12,6 +12,9 @@
     cancelar : descarta la sesion activa sin registrarla
     pausar   : detiene el conteo de tiempo de la sesion activa (la persona deja de trabajar)
     reanudar : vuelve a contar el tiempo; las pausas se descuentan de las horas al cerrar.
+    actividad: registra actividad (lo llaman los hooks del agente). Si desde la ultima actividad paso
+               mas que minutos_inactividad_pausa (config.json, 30 por defecto), ese hueco se descuenta
+               como pausa automatica (p. ej. se agoto el limite de uso del agente).
                Cerrar o cambiar de sesion estando en pausa termina la pausa en ese momento.
 
     La funcionalidad se toma de la rama NNN-nombre (o SPECIFY_FEATURE); fuera de una rama de
@@ -28,7 +31,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory, Position = 0)]
-    [ValidateSet('iniciar', 'cambiar', 'cerrar', 'estado', 'cancelar', 'pausar', 'reanudar')]
+    [ValidateSet('iniciar', 'cambiar', 'cerrar', 'estado', 'cancelar', 'pausar', 'reanudar', 'actividad')]
     [string]$Accion,
     [string]$Funcionalidad,
     [string]$Fase,
@@ -59,14 +62,15 @@ if ($Evento -and -not (Test-Path -LiteralPath (Join-Path $dataDir 'config.json')
 }
 Import-MetricsConfig $dataDir
 $stateFile = Join-Path $dataDir '.sesion-activa.json'
+$activityFile = Join-Path $dataDir '.ultima-actividad'
 
 function Get-Head { (git -C $repoRoot rev-parse HEAD).Trim() }
 
 function Read-State {
     if (-not (Test-Path -LiteralPath $stateFile)) { return $null }
     $state = Get-Content -LiteralPath $stateFile -Raw -Encoding UTF8 | ConvertFrom-Json
-    # Sesiones abiertas con versiones anteriores no tienen los campos de pausa.
-    foreach ($name in @('minutos_pausa', 'pausa_desde')) {
+    # Sesiones abiertas con versiones anteriores no tienen los campos de pausa ni de actividad.
+    foreach ($name in @('minutos_pausa', 'pausa_desde', 'minutos_pausa_auto', 'ultima_actividad')) {
         if (-not $state.PSObject.Properties[$name]) { $state | Add-Member -NotePropertyName $name -NotePropertyValue $null }
     }
     return $state
@@ -74,6 +78,34 @@ function Read-State {
 
 function Save-State($state) {
     $state | ConvertTo-Json | Set-Content -LiteralPath $stateFile -Encoding UTF8
+}
+
+function Get-LastActivity($state) {
+    # La actividad mas reciente: la del estado o la del archivo que escriben los hooks del agente
+    # (.ultima-actividad, milisegundos desde 1970).
+    $last = if ($state.ultima_actividad) { [datetime]$state.ultima_actividad } else { [datetime]$state.inicio }
+    if (Test-Path -LiteralPath $activityFile) {
+        $raw = (Get-Content -LiteralPath $activityFile -Raw).Trim()
+        $ms = 0L
+        if ([long]::TryParse($raw, [ref]$ms)) {
+            $fromFile = [DateTimeOffset]::FromUnixTimeMilliseconds($ms).LocalDateTime
+            if ($fromFile -gt $last) { $last = $fromFile }
+        }
+    }
+    return $last
+}
+
+function Add-InactivityPause($state, [datetime]$now) {
+    # Si desde la ultima actividad paso mas que el umbral (p. ej. se agoto el limite de uso del
+    # agente o la persona se fue sin pausetask), ese hueco cuenta como pausa automatica.
+    # Durante una pausa pedida por la persona no se aplica: ese tiempo ya se descuenta.
+    if ($state.pausa_desde) { return 0.0 }
+    $gap = ($now - (Get-LastActivity $state)).TotalMinutes
+    $state.ultima_actividad = $now.ToString('s')
+    if ($gap -le $script:IdleMinutes) { return 0.0 }
+    $previous = if ($state.minutos_pausa_auto) { [double]$state.minutos_pausa_auto } else { 0.0 }
+    $state.minutos_pausa_auto = [math]::Round($previous + $gap, 1)
+    return $gap
 }
 
 function Get-PausedMinutes($state, [datetime]$now) {
@@ -121,6 +153,8 @@ function Start-Session {
         automatica          = [bool]$Evento
         minutos_pausa       = 0
         pausa_desde         = $null
+        minutos_pausa_auto  = 0
+        ultima_actividad    = (Get-Date).ToString('s')
     }
     Save-State $state
     $shownModel = if ($state.nivel_razonamiento) { "$($state.modelo_ia), $($state.nivel_razonamiento)" } else { $state.modelo_ia }
@@ -136,9 +170,11 @@ function Stop-Session($state, [string]$activity, [bool]$automatic) {
     $end = Get-Date
     $notes = $Notas
     $hours = $Horas
+    [void](Add-InactivityPause $state $end)
     $pausedMinutes = [math]::Round((Get-PausedMinutes $state $end) + $PausaMinutos)
+    $autoMinutes = [math]::Round([double]$state.minutos_pausa_auto)
     if ($hours -lt 0) {
-        $raw = (($end - $start).TotalMinutes - $pausedMinutes) / 60
+        $raw = (($end - $start).TotalMinutes - $pausedMinutes - $autoMinutes) / 60
         if ($automatic -and $raw -gt $script:MaxAutoHours) {
             # Un lapso largo entre comandos suele incluir pausas: lo completa la persona.
             $hours = $null
@@ -159,6 +195,7 @@ function Stop-Session($state, [string]$activity, [bool]$automatic) {
         horas_humano        = $hours
         horas_agente        = if ($HorasAgente -ge 0) { $HorasAgente } else { $null }
         minutos_pausa       = $pausedMinutes
+        minutos_pausa_auto  = $autoMinutes
         funcionalidad       = $state.funcionalidad
         fase                = $state.fase
         actividad           = $activity
@@ -202,6 +239,7 @@ switch ($Accion) {
         if ($state.pausa_desde) {
             Write-Host ("La sesion ya esta en pausa desde las {0:HH:mm}." -f [datetime]$state.pausa_desde); return
         }
+        [void](Add-InactivityPause $state (Get-Date))
         $state.pausa_desde = (Get-Date).ToString('s')
         Save-State $state
         Write-Host ("Sesion en pausa ({0} / {1}) desde las {2:HH:mm}. El tiempo no se cuenta hasta reanudar." -f
@@ -215,19 +253,36 @@ switch ($Accion) {
         $paused = ($now - [datetime]$state.pausa_desde).TotalMinutes
         $state.minutos_pausa = [math]::Round((Get-PausedMinutes $state $now), 1)
         $state.pausa_desde = $null
+        $state.ultima_actividad = $now.ToString('s')
         Save-State $state
         Write-Host ("Sesion reanudada ({0} / {1}) tras {2:N0} min de pausa ({3:N0} min de pausa en total)." -f
             $state.funcionalidad, $state.fase, $paused, $state.minutos_pausa)
     }
 
+    'actividad' {
+        # Lo llaman los hooks del agente (p. ej. al enviar la persona un mensaje). Silencioso salvo
+        # que descuente un hueco de inactividad.
+        if (-not $state) { return }
+        $gap = Add-InactivityPause $state (Get-Date)
+        Save-State $state
+        if ($gap -gt 0) {
+            Write-Host ("Pausa automatica: {0:N0} min sin actividad no se cuentan como esfuerzo ({1} / {2})." -f
+                $gap, $state.funcionalidad, $state.fase)
+        }
+    }
+
     'estado' {
         if (-not $state) { Write-Host 'No hay una sesion activa.'; return }
         $now = Get-Date
+        $gap = Add-InactivityPause $state $now
+        Save-State $state
         $paused = Get-PausedMinutes $state $now
-        $effective = (($now - [datetime]$state.inicio).TotalMinutes - $paused) / 60
+        $auto = [double]$state.minutos_pausa_auto
+        $effective = (($now - [datetime]$state.inicio).TotalMinutes - $paused - $auto) / 60
         $pauseText = if ($state.pausa_desde) { (" | EN PAUSA desde las {0:HH:mm}" -f [datetime]$state.pausa_desde) } else { '' }
-        Write-Host ("Sesion activa: {0} / {1} con {2} ({3}), {4:N2} h efectivas, {5:N0} min de pausa{6}" -f
-            $state.funcionalidad, $state.fase, $state.herramienta, $state.modelo_ia, $effective, $paused, $pauseText)
+        Write-Host ("Sesion activa: {0} / {1} con {2} ({3}), {4:N2} h efectivas, {5:N0} min de pausa, {6:N0} min de pausa automatica{7}" -f
+            $state.funcionalidad, $state.fase, $state.herramienta, $state.modelo_ia, $effective, $paused, $auto, $pauseText)
+        if ($gap -gt 0) { Write-Host ("Se acaban de descontar {0:N0} min sin actividad." -f $gap) }
         Write-Summary (Get-LocSummary $repoRoot @("$($state.commit_inicio)..HEAD"))
         if (git -C $repoRoot status --porcelain) { Write-Warning 'Hay cambios sin commit: no se cuentan hasta confirmarlos.' }
     }

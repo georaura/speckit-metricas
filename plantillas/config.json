@@ -10,6 +10,7 @@
   "costo_hora_humano": 0,
   "horas_por_persona_mes": 152,
   "max_horas_sesion_automatica": 4,
+  "minutos_inactividad_pausa": 30,
   "directorio_specs": "specs",
   "rutas_excluidas": ["specs/", "docs/", "metricas/", ".specify/", ".agents/", ".github/", ".claude/"],
   "archivos_excluidos": "(^|/)(package-lock\\.json|pnpm-lock\\.yaml|yarn\\.lock|poetry\\.lock|Cargo\\.lock)$",

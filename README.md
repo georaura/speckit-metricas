@@ -4,7 +4,7 @@ Extensión de [GitHub Spec Kit](https://github.com/github/spec-kit) para **medir
 proyectos desarrollados con Spec-Driven Development (SDD) asistido por IA** y **calibrar un
 modelo de estimación de esfuerzo, tiempo y costo tipo COCOMO II** con datos de varios proyectos.
 
-> Estado: **0.2.0 experimental**. Los formatos de datos pueden cambiar antes de la 1.0.
+> Estado: **0.3.0 experimental**. Los formatos de datos pueden cambiar antes de la 1.0.
 
 ## Qué mide
 
@@ -33,7 +33,7 @@ tamaño, informa MMRE, PRED(25) y validación cruzada, y lo compara con COCOMO I
 
 ```bash
 # Desde una versión publicada
-specify extension add metricas --from https://github.com/georaura/speckit-metricas/archive/refs/tags/v0.2.0.zip
+specify extension add metricas --from https://github.com/georaura/speckit-metricas/archive/refs/tags/v0.3.0.zip
 
 # Desde una copia local (desarrollo)
 specify extension add --dev /ruta/a/speckit-metricas
@@ -62,6 +62,11 @@ El registro es casi automático:
 2. Al terminar `/speckit-tasks`, el hook `/speckit-metricas-puntos` fija la **línea base de PTS**.
 3. Si deja de trabajar (almuerzo, reunión, fin del día), use `/speckit-metricas-pausetask` y al
    volver `/speckit-metricas-resumetask`: las pausas se descuentan solas de las horas.
+4. **Pausa automática**: si entre dos actividades pasan más de `minutos_inactividad_pausa`
+   (30 por defecto, en `metricas/config.json`), ese hueco se descuenta como pausa automática,
+   aunque nadie haya pedido la pausa: por ejemplo, cuando se agota el límite de uso del agente o la
+   persona se va sin avisar. Se registra aparte en `minutos_pausa_auto`. Para que funcione, el agente
+   debe informar su actividad (ver «Hooks del agente»).
 4. Para trabajo fuera de los comandos (pruebas en dispositivo, aprendizaje, integración) use
    `/speckit-metricas-sesion verificar-dispositivo` y `/speckit-metricas-cerrar`.
 
@@ -108,6 +113,34 @@ Los scripts de `scripts/powershell/` también se pueden ejecutar directamente.
 | `before_constitution`, `before_specify`, `before_clarify`, `before_plan`, `before_tasks`, `before_analyze`, `before_checklist`, `before_implement` | `speckit.metricas.sesion` | Sí (no bloquea si las métricas no están inicializadas) |
 | `after_tasks` | `speckit.metricas.puntos` | Sí |
 | `after_implement` | `speckit.metricas.cerrar` | Opcional |
+
+## Hooks del agente (pausa automática)
+
+La extensión detecta la inactividad comparando la hora actual con la última actividad registrada.
+En **Claude Code**, agregue a `.claude/settings.json` del proyecto:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .specify/extensions/metricas/scripts/powershell/sesion.ps1 actividad" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [{ "type": "command", "command": "node -e \"try{require('fs').writeFileSync(require('path').join(process.env.CLAUDE_PROJECT_DIR||'.','metricas','.ultima-actividad'),String(Date.now()))}catch{}\"" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node -e \"try{require('fs').writeFileSync(require('path').join(process.env.CLAUDE_PROJECT_DIR||'.','metricas','.ultima-actividad'),String(Date.now()))}catch{}\"" }] }
+    ]
+  }
+}
+```
+
+- `UserPromptSubmit` (cada mensaje de la persona) descuenta el hueco si superó el umbral.
+- `PostToolUse` y `Stop` (cada acción del agente) solo escriben la hora en
+  `metricas/.ultima-actividad`; es rápido y evita que una tarea larga del agente cuente como
+  inactividad. En Linux/macOS reemplace `powershell` por `pwsh`.
+
+En otros agentes, configure un hook equivalente o ejecute `sesion.ps1 actividad` al retomar.
 
 ## Datos y privacidad
 
